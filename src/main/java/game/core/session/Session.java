@@ -6,6 +6,7 @@ import game.core.exceptions.FullSessionException;
 import game.core.exceptions.NoSuchPlayerException;
 import game.core.exceptions.PlayersCompleteException;
 import game.core.player.Player;
+import game.core.field.*;
 import game.core.structs.SessionStatus;
 
 import java.util.ArrayList;

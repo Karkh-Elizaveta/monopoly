@@ -1,7 +1,9 @@
 package game.core.player;
 
 import game.core.session.Session;
+import game.core.field.*;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 /**
@@ -38,6 +40,10 @@ public class Player {
     private Integer position = 0;
 
     /**
+     * player's domain
+     */
+    private ArrayList<Field> domain;
+    /**
      * create player for session
      * @param ip user's ip-address
      * @param session choosen session
@@ -62,6 +68,15 @@ public class Player {
      */
     public void changeBudget(Integer change) {
         budget =+ change;
+    }
+
+    /**
+     * add street to domain
+     */
+    public void addStreet(Street street) {
+        domain.add(street);
+        this.changeBudget(street.getCost());
+        street.buyStreet(this);
     }
 
     /**
