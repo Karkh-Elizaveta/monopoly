@@ -28,11 +28,13 @@ public class Player {
      * session
      */
     private Session session;
+    public Session getSession() { return session; }
 
     /**
      * amount of money
      */
     private Integer budget;
+    public Integer getBudget() {return budget;}
 
     /**
      * position on the field
@@ -52,6 +54,8 @@ public class Player {
         name = "guest" + Integer.toString(random.nextInt(MAX_GUEST_ID));
         this.ip = ip;
         this.session = session;
+        // денежный маячок: тут есть сумма, которую потом нужно будет передумать
+        this.budget = 1500000;
     }
 
     /**
@@ -67,7 +71,7 @@ public class Player {
      * @param change can be positive or negative
      */
     public void changeBudget(Integer change) {
-        budget =+ change;
+        budget += change;
     }
 
     /**
@@ -75,7 +79,6 @@ public class Player {
      */
     public void addStreet(Street street) {
         domain.add(street);
-        this.changeBudget(street.getCost());
         street.buyStreet(this);
     }
 

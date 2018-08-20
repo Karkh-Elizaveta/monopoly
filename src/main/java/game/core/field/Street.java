@@ -1,7 +1,10 @@
 package game.core.field;
 
 import game.core.player.Player;
+import game.core.session.Session;
 import game.core.structs.*;
+
+import java.util.ArrayList;
 
 public class Street extends Field {
     /**
@@ -21,7 +24,7 @@ public class Street extends Field {
     /**
      * количество улиц выбранного типа
      */
-    private Integer typeAmount = type.getAmount();
+    private Integer typeAmount;
     public Integer getTypeAmount() {
         return typeAmount;
     }
@@ -33,63 +36,17 @@ public class Street extends Field {
     public Integer getCost() {
         return cost;
     }
-
     /**
      * стоимость постройки дома
      */
     private Integer houseCost;
     public Integer getHouseCost() { return houseCost; }
-
     /**
-     * количество домов на улице,по умолчанию домов на улице нет
+     * стоимость постройки отеля
      */
-    private Integer houses = 0;
-
-    /**
-     * постройка дома
-     */
-    public void addHouse(){
-        owner.changeBudget(-houseCost);
-        houses++;
-    }
-
-    /**
-     * продажа дома
-     */
-    public void saleHouse() {
-        owner.changeBudget(houseCost);
-        houses--;
-    }
-
-    /**
-    * стоимость постройки отеля
-    */
     private Integer hotelCost;
     public Integer getHotelCost() {
         return hotelCost;
-    }
-
-    /**
-     * построен ли отель на улице, по умолчанию отеля на улице нет
-     */
-    private Boolean hotel = false;
-
-    /**
-     * постройка отеля
-     */
-    public void addHotel() {
-        owner.changeBudget(-hotelCost);
-        houses = 0;
-        hotel = true;
-    }
-
-    /**
-     * продажа отеля
-     */
-    public void saleHotel() {
-        owner.changeBudget(hotelCost);
-        houses = 4;
-        hotel = false;
     }
 
     /**
@@ -116,58 +73,159 @@ public class Street extends Field {
      * налог при постройке отеля на улице
      */
     private Integer taxWithHotel;
+
     /**
-     * возвращение налога
+     * владелец улицы
      */
-    public void getTax(Integer paidTax) {
-        if (!inLimbo) {
-            if (hotel) owner.changeBudget(taxWithHotel);
-            else {
-                if (houses == 0) {
-                    owner.changeBudget(tax);
-                } else {
-                    owner.changeBudget(((int) (1 / houses)) * taxWithOneHouse + ((int) (2 / houses % 2)) * taxWithTwoHouses +
-                            ((int) (3 / houses % 3)) * taxWithThreeHouses + ((int) (4 / houses % 4)) * taxWithFourHouses);
+    private Player owner;
+    public Player getOwner() {
+        return owner;
+    }
+    /**
+     * в монополии улица или нет
+     */
+    private Boolean isInMonopoly;
+    public Boolean getIsInMonopoly() { return isInMonopoly; }
+    /**
+     * заложена улица или нет
+     */
+    private boolean isInLimbo = false;
+    public boolean getInLimbo() { return isInLimbo; }
+    /**
+     * количество домов на улице
+     */
+    private Integer houses;
+    public Integer getHouses() { return houses; }
+    /**
+     * построен ли отель на улице, по умолчанию отеля на улице нет
+     */
+    private Boolean hotel;
+    public Boolean getHotel() { return hotel; }
+
+    /**
+     * проверка на монополию
+     */
+    public void monopoly(Session session) {
+        isInMonopoly = true;
+        ArrayList<Street> allStreets = new ArrayList<Street>();
+        for(Street street : session.getPlayingField().stream().filter(field -> field instanceof Street).toArray(Street[]::new)) {
+            if ((street.getType() == this.getType()) && ((street.getOwner() != owner))) isInMonopoly = false;
+        }
+        for(Street street : session.getPlayingField().stream().filter(field -> field instanceof Street).toArray(Street[]::new)) {
+            if (street.getType() == this.getType()) {
+                street.isInMonopoly = this.isInMonopoly;
+                System.out.println(street.name + " monopoly " + street.isInMonopoly);
+                if (!street.isInMonopoly) {
+                    street.houses = 0;
+                    street.hotel = false;
                 }
             }
         }
     }
 
     /**
-     * владелец, по умолчанию владельца нет
-     */
-    private Player owner = null;
-
-    /**
-     * покупка улицы
+     * покупка улицы, у которой нет владельца
      */
     public void buyStreet(Player newOwner) {
         owner = newOwner;
+        owner.changeBudget(-cost);
+        this.monopoly(owner.getSession());
     }
 
     /**
-     * улица освобождается
+     * покупка улицы, у которой есть владелец
+     */
+    public void buyStreet(Player newOwner, Player oldOwner, Integer contractCost) {
+        owner = newOwner;
+        owner.changeBudget(-contractCost);
+        oldOwner.changeBudget(contractCost);
+        this.monopoly(owner.getSession());
+    }
+
+    /**
+     * освобождение улицы от владельца
      */
     public void freeStreet() {
+        Session oldOwnerSession = owner.getSession();
         owner = null;
+        this.monopoly(oldOwnerSession);
     }
 
     /**
-     * заложена улица или нет, по умолчанию не заложена
+     * постройка дома
      */
-    private boolean inLimbo = false;
-    public boolean getInLimbo() { return inLimbo; }
+    public void buyHouse(){
+        if (isInMonopoly) {
+            Boolean canWeBuild = true;
+            for (Street street : owner.getSession().getPlayingField().stream().filter(field -> field instanceof Street).toArray(Street[]::new)) {
+                if ((street.getType() == this.getType()) && (street.getHouses() < this.getHouses())) canWeBuild = false;
+            }
+            if (this.getHouses() == 4) canWeBuild = false;
+            if (canWeBuild) {
+                owner.changeBudget(-houseCost);
+                houses++;
+            }
+        }
+    }
+
+    /**
+     * продажа дома
+     */
+    public void saleHouse() {
+        if (isInMonopoly) {
+            Boolean canWeSale = true;
+            for (Street street : owner.getSession().getPlayingField().stream().filter(field -> field instanceof Street).toArray(Street[]::new)) {
+                if ((street.getType() == this.getType()) && (street.getHouses() > this.getHouses())) canWeSale = false;
+            }
+            if (this.getHouses() == 0) canWeSale = false;
+            if (canWeSale) {
+                owner.changeBudget(houseCost/2);
+                houses--;
+            }
+        }
+    }
+
+    /**
+     * постройка отеля
+     */
+    public void buyHotel() {
+        if (isInMonopoly) {
+            Boolean canWeBuild = false;
+            for (Street street : owner.getSession().getPlayingField().stream().filter(field -> field instanceof Street).toArray(Street[]::new)) {
+                if ((street.getType() == this.getType()) && ((street.getHouses() == 4) || street.getHotel())) canWeBuild = true;
+            }
+            if (!this.getHotel()) canWeBuild = true;
+            if (canWeBuild) {
+                owner.changeBudget(-hotelCost);
+                houses = 0;
+                hotel = true;
+            }
+        }
+    }
+
+    /**
+     * продажа отеля
+     */
+    public void saleHotel() {
+        if (isInMonopoly) {
+            if (hotel) {
+                owner.changeBudget(hotelCost/2);
+                houses = 4;
+                hotel = false;
+            }
+        }
+    }
 
     /**
      * улица закладывается владельцем в ломбард
      */
     public void putInLimbo() {
-        inLimbo = true;
+        isInLimbo = true;
         if (hotel) {
-            owner.changeBudget(hotelCost + cost/2);
+            owner.changeBudget(hotelCost/2 + 2*houseCost + cost/2);
             hotel = false;
         } else {
-            owner.changeBudget(houses * houseCost + cost/2);
+            owner.changeBudget(houses * houseCost/2 + cost/2);
             houses = 0;
         }
     }
@@ -176,8 +234,85 @@ public class Street extends Field {
      * улица выкупается владельцем из ломбарда
      */
     public void getFromLimbo() {
-        inLimbo = false;
+        isInLimbo = false;
         owner.changeBudget(-cost/2);
+    }
+
+    /**
+     * возвращение налога
+     */
+    public void getTax(Player payer) {
+        if (!isInLimbo) {
+            if (isInMonopoly) {
+                if (hotel) {
+                    owner.changeBudget(taxWithHotel);
+                    payer.changeBudget(-taxWithHotel);
+                } else {
+                    switch (houses) {
+                        case 0:
+                            owner.changeBudget(2*tax);
+                            payer.changeBudget(-2*tax);
+                            break;
+                        case 1:
+                            owner.changeBudget(taxWithOneHouse);
+                            payer.changeBudget(-taxWithOneHouse);
+                            break;
+                        case 2:
+                            owner.changeBudget(taxWithTwoHouses);
+                            payer.changeBudget(-taxWithTwoHouses);
+                            break;
+                        case 3:
+                            owner.changeBudget(taxWithThreeHouses);
+                            payer.changeBudget(-taxWithThreeHouses);
+                            break;
+                        case 4:
+                            owner.changeBudget(taxWithFourHouses);
+                            payer.changeBudget(-taxWithFourHouses);
+                            break;
+                    }
+                }
+            }
+            else {
+                owner.changeBudget(tax);
+                payer.changeBudget(-tax);
+            }
+        }
+    }
+
+    /**
+     * конструктор
+     * @param inputName имя улицы, указываемое при создании
+     * @param inputType тип улицы, указываемое при создании
+     * @param inputCost стоимость покупки улицы, указываемая при создании
+     * @param inputHouseCost стоимость постройки дома на улице, указываемая при создании
+     * @param inputHotelCost стоимость постройки отеля на улице, указваемая при создании
+     * @param inputTax рента, которая берется с пустой улицы, указываемая при создании
+     * @param inputTax1 рента, которая берется с улицы с одним домом, указываемая при создании
+     * @param inputTax2 рента, которая берется с улицы с двумя домами, указываемая при создании
+     * @param inputTax3 рента, которая берется с улицы с тремя домами, указываемая при создании
+     * @param inputTax4 рента, которая берется с улицы с четырьмя домами, указываемая при создании
+     * @param inputTaxH рента, которая берется с улицы с отелем, указываемая при создании
+     */
+    public Street(String inputName, StreetType inputType, Integer inputCost, Integer inputHouseCost,
+                  Integer inputHotelCost, Integer inputTax, Integer inputTax1, Integer inputTax2,
+                  Integer inputTax3, Integer inputTax4, Integer inputTaxH) {
+        name = inputName;
+        type = inputType;
+        typeAmount = inputType.getAmount();
+        owner = null;
+        houses = 0;
+        hotel = false;
+        isInLimbo = false;
+        isInMonopoly = false;
+        tax = inputTax;
+        taxWithOneHouse = inputTax1;
+        taxWithTwoHouses = inputTax2;
+        taxWithThreeHouses = inputTax3;
+        taxWithFourHouses = inputTax4;
+        taxWithHotel = inputTaxH;
+        cost = inputCost;
+        houseCost = inputHouseCost;
+        hotelCost = inputHotelCost;
     }
 
 }

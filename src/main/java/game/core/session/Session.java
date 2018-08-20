@@ -1,6 +1,5 @@
 package game.core.session;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import game.core.exceptions.EmptySessionException;
 import game.core.exceptions.FullSessionException;
 import game.core.exceptions.NoSuchPlayerException;
@@ -35,6 +34,8 @@ public class Session {
     private SessionStatus status;
 
     private ArrayList<Field> playingField;
+    public ArrayList<Field> getPlayingField() { return playingField; }
+
     /**
      * all sessions
      */
@@ -49,6 +50,7 @@ public class Session {
         this.capacity = capacity;
         this.status = SessionStatus.PLAYERS_WAITING;
         this.players = new ArrayList<Player>();
+        this.playingField = new ArrayList<Field>();
     }
 
     /**
