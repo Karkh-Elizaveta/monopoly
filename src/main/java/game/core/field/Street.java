@@ -1,5 +1,6 @@
 package game.core.field;
 
+import game.core.exceptions.*;
 import game.core.player.Player;
 import game.core.session.Session;
 import game.core.structs.*;
@@ -7,6 +8,9 @@ import game.core.structs.*;
 import java.util.ArrayList;
 
 public class Street extends Field {
+
+    private static final Integer MAX_HOUSES = 4;
+
     /**
      * название улицы
      */
@@ -106,20 +110,23 @@ public class Street extends Field {
      * проверка на монополию
      */
     public void monopoly(Session session) {
-        isInMonopoly = true;
-        ArrayList<Street> allStreets = new ArrayList<Street>();
-        for(Street street : session.getPlayingField().stream().filter(field -> field instanceof Street).toArray(Street[]::new)) {
-            if ((street.getType() == this.getType()) && ((street.getOwner() != owner))) isInMonopoly = false;
-        }
-        for(Street street : session.getPlayingField().stream().filter(field -> field instanceof Street).toArray(Street[]::new)) {
-            if (street.getType() == this.getType()) {
-                street.isInMonopoly = this.isInMonopoly;
-                System.out.println(street.name + " monopoly " + street.isInMonopoly);
-                if (!street.isInMonopoly) {
-                    street.houses = 0;
-                    street.hotel = false;
-                }
+        isInMonopoly = session.
+                getPlayingFields()
+                .stream().filter(field -> field instanceof Street)
+                .filter(street -> ((Street) street).getType() == this.getType())
+                .allMatch(street -> ((Street) street).getOwner() == owner);
+        for(Street street : session
+                .getPlayingFields()
+                .stream()
+                .filter(field -> field instanceof Street)
+                .filter(street -> ((Street) street).getType() == this.getType())
+                .toArray(Street[]::new)) {
+            street.isInMonopoly = this.isInMonopoly;
+            if (!street.isInMonopoly) {
+                street.houses = 0;
+                street.hotel = false;
             }
+            System.out.println(street.name + " monopoly " + street.isInMonopoly);
         }
     }
 
@@ -154,66 +161,84 @@ public class Street extends Field {
     /**
      * постройка дома
      */
-    public void buyHouse(){
+    public void buyHouse() throws NotMonopolyException, FullHouseException, NotEnoughHousesException {
         if (isInMonopoly) {
-            Boolean canWeBuild = true;
-            for (Street street : owner.getSession().getPlayingField().stream().filter(field -> field instanceof Street).toArray(Street[]::new)) {
-                if ((street.getType() == this.getType()) && (street.getHouses() < this.getHouses())) canWeBuild = false;
+            if (owner.getSession()
+                    .getPlayingFields()
+                    .stream()
+                    .filter(field -> field instanceof Street)
+                    .filter(street -> ((Street) street).getType() == this.getType())
+                    .allMatch(street -> ((Street) street).getHouses() < this.getHouses())) {
+                if (this.getHouses() != MAX_HOUSES) {
+                    owner.changeBudget(-houseCost);
+                    houses++;
+                }
+                else throw new FullHouseException();
             }
-            if (this.getHouses() == 4) canWeBuild = false;
-            if (canWeBuild) {
-                owner.changeBudget(-houseCost);
-                houses++;
-            }
+            else throw new NotEnoughHousesException();
         }
+        else throw new NotMonopolyException();
+
     }
 
     /**
      * продажа дома
      */
-    public void saleHouse() {
+    public void saleHouse() throws NotMonopolyException, NotEnoughHousesException {
         if (isInMonopoly) {
-            Boolean canWeSale = true;
-            for (Street street : owner.getSession().getPlayingField().stream().filter(field -> field instanceof Street).toArray(Street[]::new)) {
-                if ((street.getType() == this.getType()) && (street.getHouses() > this.getHouses())) canWeSale = false;
+            if (owner.getSession()
+                    .getPlayingFields()
+                    .stream()
+                    .filter(field -> field instanceof Street)
+                    .filter(street -> ((Street) street).getType() == this.getType())
+                    .allMatch(street -> ((Street) street).getHouses() > this.getHouses())) {
+                if (this.getHouses() != 0) {
+                    owner.changeBudget(houseCost/2);
+                    houses--;
+                }
+                else throw new NotEnoughHousesException();
             }
-            if (this.getHouses() == 0) canWeSale = false;
-            if (canWeSale) {
-                owner.changeBudget(houseCost/2);
-                houses--;
-            }
+            else throw new NotEnoughHousesException();
         }
+        else throw new NotMonopolyException();
     }
 
     /**
      * постройка отеля
      */
-    public void buyHotel() {
+    public void buyHotel() throws AlreadyHasHotelException, NotEnoughHousesException, NotMonopolyException {
         if (isInMonopoly) {
-            Boolean canWeBuild = false;
-            for (Street street : owner.getSession().getPlayingField().stream().filter(field -> field instanceof Street).toArray(Street[]::new)) {
-                if ((street.getType() == this.getType()) && ((street.getHouses() == 4) || street.getHotel())) canWeBuild = true;
+            if (owner.getSession()
+                    .getPlayingFields()
+                    .stream()
+                    .filter(field -> field instanceof Street)
+                    .filter(street -> ((Street) street).getType() == this.getType())
+                    .allMatch((street -> (((Street) street).getHouses() == MAX_HOUSES) || ((Street) street).getHotel()))) {
+                if (!this.getHotel()) {
+                    owner.changeBudget(-hotelCost);
+                    houses = 0;
+                    hotel = true;
+                }
+                else throw new AlreadyHasHotelException();
             }
-            if (!this.getHotel()) canWeBuild = true;
-            if (canWeBuild) {
-                owner.changeBudget(-hotelCost);
-                houses = 0;
-                hotel = true;
-            }
+            else throw new NotEnoughHousesException();
         }
+        else throw new NotMonopolyException();
     }
 
     /**
      * продажа отеля
      */
-    public void saleHotel() {
+    public void saleHotel() throws NotMonopolyException, NotHotelException {
         if (isInMonopoly) {
-            if (hotel) {
+            if (!this.getHotel()) {
                 owner.changeBudget(hotelCost/2);
-                houses = 4;
+                houses = MAX_HOUSES;
                 hotel = false;
             }
+            else throw new NotHotelException();
         }
+        else throw new NotMonopolyException();
     }
 
     /**
@@ -241,7 +266,7 @@ public class Street extends Field {
     /**
      * возвращение налога
      */
-    public void getTax(Player payer) {
+    public void substractTax(Player payer) {
         if (!isInLimbo) {
             if (isInMonopoly) {
                 if (hotel) {

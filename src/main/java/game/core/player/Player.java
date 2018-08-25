@@ -13,6 +13,7 @@ public class Player {
 
     private static final Random random = new Random();
     private static final Integer MAX_GUEST_ID = 9999999;
+    private static final Integer START_BUDGET = 1500000;
 
     /**
      * player's identifier
@@ -55,7 +56,7 @@ public class Player {
         this.ip = ip;
         this.session = session;
         // денежный маячок: тут есть сумма, которую потом нужно будет передумать
-        this.budget = 1500000;
+        this.budget = START_BUDGET;
     }
 
     /**

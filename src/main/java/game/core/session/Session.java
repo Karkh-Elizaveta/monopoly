@@ -33,8 +33,8 @@ public class Session {
      */
     private SessionStatus status;
 
-    private ArrayList<Field> playingField;
-    public ArrayList<Field> getPlayingField() { return playingField; }
+    private ArrayList<Field> playingFields;
+    public ArrayList<Field> getPlayingFields() { return playingFields; }
 
     /**
      * all sessions
@@ -50,7 +50,7 @@ public class Session {
         this.capacity = capacity;
         this.status = SessionStatus.PLAYERS_WAITING;
         this.players = new ArrayList<Player>();
-        this.playingField = new ArrayList<Field>();
+        this.playingFields = new ArrayList<Field>();
     }
 
     /**

@@ -10,6 +10,7 @@ public class Entry {
         System.out.println("hello, my dear");
         Street testStreet = new Street("Дерибасовская", StreetType.BLUE, 5, 1, 2, 10,20, 30, 40, 50, 60);
         Street testStreet2 = new Street("Ленина", StreetType.BLUE, 5, 1, 2, 10,20, 30, 40, 50, 60);
+        Street testStreet3 = new Street("Ленина24", StreetType.GREEN, 5, 1, 2, 10,20, 30, 40, 50, 60);
         Session testSession = Session.createNewSession(4);
         testSession.getPlayingField().add(testStreet);
         testSession.getPlayingField().add(testStreet2);
