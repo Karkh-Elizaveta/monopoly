@@ -306,17 +306,17 @@ public class Street extends Field {
 
     /**
      * конструктор
-     * @param inputName имя улицы, указываемое при создании
-     * @param inputType тип улицы, указываемое при создании
-     * @param inputCost стоимость покупки улицы, указываемая при создании
-     * @param inputHouseCost стоимость постройки дома на улице, указываемая при создании
-     * @param inputHotelCost стоимость постройки отеля на улице, указваемая при создании
-     * @param inputTax рента, которая берется с пустой улицы, указываемая при создании
-     * @param inputTax1 рента, которая берется с улицы с одним домом, указываемая при создании
-     * @param inputTax2 рента, которая берется с улицы с двумя домами, указываемая при создании
-     * @param inputTax3 рента, которая берется с улицы с тремя домами, указываемая при создании
-     * @param inputTax4 рента, которая берется с улицы с четырьмя домами, указываемая при создании
-     * @param inputTaxH рента, которая берется с улицы с отелем, указываемая при создании
+     * @param inputName имя улицы
+     * @param inputType тип улицы
+     * @param inputCost стоимость покупки улицы
+     * @param inputHouseCost стоимость постройки дома на улице
+     * @param inputHotelCost стоимость постройки отеля на улице
+     * @param inputTax рента, которая берется с пустой улицы
+     * @param inputTax1 рента, которая берется с улицы с одним домом
+     * @param inputTax2 рента, которая берется с улицы с двумя домами
+     * @param inputTax3 рента, которая берется с улицы с тремя домами
+     * @param inputTax4 рента, которая берется с улицы с четырьмя домами
+     * @param inputTaxH рента, которая берется с улицы с отелем
      */
     public Street(String inputName, StreetType inputType, Integer inputCost, Integer inputHouseCost,
                   Integer inputHotelCost, Integer inputTax, Integer inputTax1, Integer inputTax2,
