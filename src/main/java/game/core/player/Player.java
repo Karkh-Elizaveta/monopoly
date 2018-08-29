@@ -40,7 +40,9 @@ public class Player {
     /**
      * position on the field
      */
-    private Integer position = 0;
+    private Field position;
+    public Field getPosition() { return position; }
+    public void setPosition(Field newPosition ) { position = newPosition; }
 
     /**
      * player's domain

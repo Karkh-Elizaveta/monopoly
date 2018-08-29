@@ -3,7 +3,6 @@ package game.core.field;
 import game.core.exceptions.*;
 import game.core.player.Player;
 import game.core.session.Session;
-import game.core.structs.StreetType;
 
 public class Company extends Field {
 
@@ -105,7 +104,7 @@ public class Company extends Field {
     /**
      * возвращение налога
      */
-    public void substractTax(Player payer, Integer points) {
+    public void substractTax(Player payer, Integer points) throws InLimboException {
         if (!isInLimbo) {
             if (allCompanies) {
                 owner.changeBudget(10*points);
@@ -116,6 +115,7 @@ public class Company extends Field {
                 payer.changeBudget(-4*points);
             }
         }
+        else throw new InLimboException();
     }
 
     /**

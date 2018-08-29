@@ -266,7 +266,7 @@ public class Street extends Field {
     /**
      * возвращение налога
      */
-    public void substractTax(Player payer) {
+    public void substractTax(Player payer) throws InLimboException{
         if (!isInLimbo) {
             if (isInMonopoly) {
                 if (hotel) {
@@ -302,6 +302,7 @@ public class Street extends Field {
                 payer.changeBudget(-tax);
             }
         }
+        else throw new InLimboException();
     }
 
     /**
